@@ -1,6 +1,7 @@
 var http = require("http");
 
 const fs = require("fs/promises");
+const { parse } = require("path");
 
 const server = http.createServer(async (request, response) => {
   const { method, url } = request;
@@ -8,7 +9,9 @@ const server = http.createServer(async (request, response) => {
     response.statusCode = 200;
     response.write(JSON.stringify({ message: "Hello!" }));
     response.end();
-  } else if (url === "/api/books" && method === "GET") {
+  }
+
+  if (url === "/api/books" && method === "GET") {
     try {
       const books = await fs.readFile("./data/books.json");
       const booksData = JSON.parse(books.toString());
@@ -18,7 +21,8 @@ const server = http.createServer(async (request, response) => {
     } catch (e) {
       console.log(e);
     }
-  } else if (method === "GET" && url === "/api/authors") {
+  }
+  if (method === "GET" && url === "/api/authors") {
     try {
       const authors = await fs.readFile("./data/authors.json");
       const authorsData = JSON.parse(authors.toString());
@@ -27,6 +31,36 @@ const server = http.createServer(async (request, response) => {
       response.end();
     } catch (e) {
       console.log(e);
+    }
+  }
+
+  const urlParts = url.split("/");
+  if (
+    method === "GET" &&
+    urlParts[1] === "api" &&
+    urlParts[2] === "books" &&
+    typeof parseInt(urlParts[3]) === "number" &&
+    urlParts[4] === "author"
+  ) {
+    try {
+      const books = await fs.readFile("./data/books.json");
+      const parsedBooksData = JSON.parse(books);
+        const filterAuthorData = parsedBooksData.filter((book) => {
+            return book.authorId === parseInt(urlParts[3]);
+          });
+        if (!filterAuthorData.length){
+            response.statusCode = 200
+            response.write(JSON.stringify({ authorBooks: {message: "No author found"} }));
+            response.end()
+        } else {
+            response.statusCode = 200;
+            response.write(JSON.stringify({ authorBooks: filterAuthorData }));
+            response.end();
+        }
+      }
+     catch (e) {
+        response.statusCode = 500
+        console.log(e);
     }
   }
 
