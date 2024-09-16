@@ -12,18 +12,35 @@ const server = http.createServer(async (request, response) => {
     try {
       const books = await fs.readFile("./data/books.json");
       const booksData = JSON.parse(books.toString());
-      response.write(JSON.stringify(booksData));
+      response.write(JSON.stringify({books: booksData}));
       response.statusCode = 200;
       response.end();
     } catch (e) {
       console.log(e);
     }
-  } else if(method === "GET" && url === "/api/authors"){
+  } else if (method === "GET" && url === "/api/authors") {
     try {
-      const authors = await fs.readFile("./data/authors.json")
-      const authorsData = JSON.parse(authors.toString())
-      response.write(JSON.stringify(authorsData)) 
-      response.end()  
+      const authors = await fs.readFile("./data/authors.json");
+      const authorsData = JSON.parse(authors.toString());
+      response.statusCode = 200;
+      response.write(JSON.stringify({authors : authorsData}));
+      response.end();
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  const id = request.url.slice(11)
+  if (method === "GET" && url === `/api/books/${id}`) {
+    try {
+        const books = await fs.readFile("./data/books.json");
+        const booksData = JSON.parse(books.toString());
+        const filterData = booksData.filter((book)=>{
+            return book.bookId === parseInt(id)
+        })
+        response.write(JSON.stringify({book: filterData}))
+        response.statusCode = 200
+        response.end();
     } catch (e){
         console.log(e)
     }
