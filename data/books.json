@@ -88,5 +88,17 @@
     "bookTitle": "The Da Vinci Code",
     "authorId": 1,
     "isFiction": true
+  },
+  {
+    "bookId": 16,
+    "bookTitle": "Atomic habits",
+    "authorId": 1,
+    "isFiction": true
+  },
+  {
+    "bookId": 17,
+    "bookTitle": "Psychology Of Money",
+    "authorId": 2,
+    "isFiction": true
   }
 ]
