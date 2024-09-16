@@ -1,4 +1,5 @@
 var http = require('http');
+
 const fs = require('fs/promises')
 
 const server = http.createServer(async (request, response) => {
@@ -8,11 +9,11 @@ const server = http.createServer(async (request, response) => {
         response.write(JSON.stringify({message: "Hello!"}))
         response.end()
     } else if (url === '/api/books' && method === "GET"){
-        response.statusCode = 200
         try {
             const books = await fs.readFile('./data/books.json')
             const booksData = JSON.parse(books.toString())
             response.write(JSON.stringify(booksData))
+            response.statusCode = 200
             response.end()
         } catch (e){
             console.log(e)
