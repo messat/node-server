@@ -3,6 +3,8 @@ var http = require("http");
 const fs = require("fs/promises");
 const querystring = require('node:querystring'); 
 const { error } = require("console");
+const { json } = require("express");
+const e = require("express");
 
 const server = http.createServer(async (request, response) => {
   const { method, url } = request;
@@ -132,18 +134,26 @@ const server = http.createServer(async (request, response) => {
         try {
           const books = await fs.readFile("./data/books.json");
           const parsedBooksData = JSON.parse(books);
-          const newBooksData = [...parsedBooksData, JSON.parse(body)];
-          const newBooksFileData = await fs.writeFile(
-            "./data/books.json",
-            JSON.stringify(newBooksData, null, 2),
-            "utf8"
-          );
-          response.writeHead(201, { "Content-Type": "application/json" });
-          response.write(body);
-          response.end();
+          const bodyParsed = JSON.parse(body)
+          if(!bodyParsed.bookId || !bodyParsed.bookTitle || !bodyParsed.authorId || typeof bodyParsed.isFiction !== 'boolean'){
+            response.statusCode = 400 
+            response.write(JSON.stringify({message: "does not follow schema", status: 400}))
+          } else {
+              const newBooksData = [...parsedBooksData, JSON.parse(body)];
+              const newBooksFileData = await fs.writeFile(
+                "./data/books.json",
+                JSON.stringify(newBooksData, null, 2),
+                "utf8"
+              );
+              response.writeHead(201, { "Content-Type": "application/json" });
+              response.write(body);
+          }
+          return response.end();
         } catch (err) {
-          response.statusCode = 500;
           console.log(err);
+          response.statusCode = 500;
+          response.write(JSON.stringify({error: err}))
+          return response.end()
         }
       });
     } catch (e) {
