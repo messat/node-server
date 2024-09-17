@@ -100,5 +100,11 @@
     "bookTitle": "Psychology Of Money",
     "authorId": 2,
     "isFiction": true
+  },
+  {
+    "bookId": 18,
+    "bookTitle": "the era of black swan",
+    "authorId": 3,
+    "isFiction": true
   }
 ]
