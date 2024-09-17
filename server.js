@@ -1,7 +1,7 @@
 var http = require("http");
 
 const fs = require("fs/promises");
-const { parse } = require("path");
+const querystring = require('node:querystring'); 
 const { error } = require("console");
 
 const server = http.createServer(async (request, response) => {
@@ -11,16 +11,36 @@ const server = http.createServer(async (request, response) => {
     response.write(JSON.stringify({ message: "Hello!" }));
     response.end();
   }
-
-  if (url === "/api/books" && method === "GET") {
+  if ((url === "/api/books" || url === "/api/books?fiction=true" || url === "/api/books?fiction=false") && method === "GET") {
+    const ref = url.split("?")
+    const queryParams = querystring.parse(ref[1])
     try {
       const books = await fs.readFile("./data/books.json");
       const booksData = JSON.parse(books.toString());
-      response.write(JSON.stringify({ books: booksData }));
-      response.statusCode = 200;
-      response.end();
+      if(queryParams.fiction === 'true'){
+        const filterFiction = booksData.filter((book)=>{
+            return book.isFiction === true
+        })
+        response.statusCode = 200
+        response.write(JSON.stringify({fictionTrue: filterFiction}))
+      } else if (queryParams.fiction === 'false'){
+        const falseFiction = booksData.filter((book)=>{
+            return book.isFiction === false
+        })
+        response.statusCode = 200
+        response.write(JSON.stringify({fictionFalse: falseFiction}))
+      }
+      
+      else {
+          response.write(JSON.stringify({ books: booksData }));
+          response.statusCode = 200;
+      }
+      return response.end();
     } catch (e) {
       console.log(e);
+      response.statusCode = 500
+      response.write(JSON.stringify({error: e}))
+      return response.end()
     }
   }
   if (method === "GET" && url === "/api/authors") {
