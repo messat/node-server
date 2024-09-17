@@ -2,6 +2,7 @@ var http = require("http");
 
 const fs = require("fs/promises");
 const { parse } = require("path");
+const { error } = require("console");
 
 const server = http.createServer(async (request, response) => {
   const { method, url } = request;
@@ -39,44 +40,65 @@ const server = http.createServer(async (request, response) => {
     method === "GET" &&
     urlParts[1] === "api" &&
     urlParts[2] === "books" &&
-    typeof parseInt(urlParts[3]) === "number" &&
+    urlParts[3].length &&
     urlParts[4] === "author"
   ) {
+    const regex = /[A-Za-z_*]/gi;
+    if (regex.test(urlParts[3])) {
+      response.statusCode = 400;
+      response.write(JSON.stringify({ message: "404 Bad request" }));
+      return response.end();
+    }
     try {
       const books = await fs.readFile("./data/books.json");
       const parsedBooksData = JSON.parse(books);
-        const filterAuthorData = parsedBooksData.filter((book) => {
-            return book.authorId === parseInt(urlParts[3]);
-          });
-        if (!filterAuthorData.length){
-            response.statusCode = 200
-            response.write(JSON.stringify({ authorBooks: {message: "No author found"} }));
-            response.end()
-        } else {
-            response.statusCode = 200;
-            response.write(JSON.stringify({ authorBooks: filterAuthorData }));
-            response.end();
-        }
+      const filterAuthorData = parsedBooksData.filter((book) => {
+        return book.authorId === parseInt(urlParts[3]);
+      });
+      if (!filterAuthorData.length) {
+        response.statusCode = 404;
+        response.write(
+          JSON.stringify({ authorBooks: { message: "404 No author found" } })
+        );
+      } else {
+        response.statusCode = 200;
+        response.write(JSON.stringify({ authorBooks: filterAuthorData }));
       }
-     catch (e) {
-        response.statusCode = 500
-        console.log(e);
+      return response.end()
+    } catch (e) {
+        console.log(e)
+        response.statusCode = 500;
+        response.write(JSON.stringify({ error: e }));
+        return response.end()
     }
   }
 
-  const id = request.url.slice(11);
+  let id = request.url.slice(11);
   if (method === "GET" && url === `/api/books/${id}`) {
+    const regex = /[A-Za-z_*]/gi;
+    if (regex.test(id)) {
+      response.statusCode = 400;
+      response.write(JSON.stringify({ message: "404 Bad request" }));
+      return response.end();
+    }
     try {
-      const books = await fs.readFile("./data/books.json");
+      const books = await fs.readFile("./data/book.json");
       const booksData = JSON.parse(books.toString());
       const filterData = booksData.filter((book) => {
         return book.bookId === parseInt(id);
       });
-      response.write(JSON.stringify({ book: filterData }));
-      response.statusCode = 200;
-      response.end();
+      if (!filterData.length) {
+        response.statusCode = 404;
+        response.write(JSON.stringify({ message: "404 not found" }));
+      } else {
+        response.statusCode = 200;
+        response.write(JSON.stringify({ book: filterData }));
+    }
+    return response.end();
     } catch (e) {
-      console.log(e);
+      response.statusCode = 500;
+      response.write(JSON.stringify({ error: e }));
+      return response.end()
     }
   }
 
